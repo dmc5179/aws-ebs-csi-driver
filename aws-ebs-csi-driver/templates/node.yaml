@@ -60,9 +60,11 @@ spec:
               mountPath: /csi
             - name: device-dir
               mountPath: /dev
+            - name: certificates
+              mountPath: /etc/pki
           ports:
             - name: healthz
-              containerPort: 9808
+              containerPort: 19809
               protocol: TCP
           livenessProbe:
             httpGet:
@@ -92,6 +94,8 @@ spec:
               mountPath: /csi
             - name: registration-dir
               mountPath: /registration
+            - name: certificates
+              mountPath: /etc/pki
         - name: liveness-probe
           image: {{ printf "%s:%s" .Values.sidecars.livenessProbeImage.repository .Values.sidecars.livenessProbeImage.tag }}
           args:
@@ -99,6 +103,8 @@ spec:
           volumeMounts:
             - name: plugin-dir
               mountPath: /csi
+            - name: certificates
+              mountPath: /etc/pki
       volumes:
         - name: kubelet-dir
           hostPath:
@@ -115,4 +121,8 @@ spec:
         - name: device-dir
           hostPath:
             path: /dev
+            type: Directory
+        - name: certificates
+          hostPath:
+            path: /etc/pki
             type: Directory
