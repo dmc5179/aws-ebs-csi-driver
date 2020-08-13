@@ -42,14 +42,14 @@ There are several optional parameters that could be passed into `CreateVolumeReq
 Following sections are Kubernetes specific. If you are Kubernetes user, use followings for driver features, installation steps and examples.
 
 ## Kubernetes Version Compability Matrix
-| AWS EBS CSI Driver \ Kubernetes Version| v1.12 | v1.13 | v1.14 | v1.15 |
-|----------------------------------------|-------|-------|-------|-------|
-| master branch                          | no    | no+   | yes   | yes   |
-| v0.5.0                                 | no    | no+   | yes   | yes   |
-| v0.4.0                                 | no    | no+   | yes   | yes   |
-| v0.3.0                                 | no    | no+   | yes   | no    |
-| v0.2.0                                 | no    | yes   | yes   | no    |
-| v0.1.0                                 | yes   | yes   | yes   | no    |
+| AWS EBS CSI Driver \ Kubernetes Version| v1.12 | v1.13 | v1.14 | v1.15 | v1.16 |
+|----------------------------------------|-------|-------|-------|-------|-------|
+| master branch                          | no    | no+   | yes   | yes   | yes   |
+| v0.5.0                                 | no    | no+   | yes   | yes   | yes   |
+| v0.4.0                                 | no    | no+   | yes   | yes   | no    |
+| v0.3.0                                 | no    | no+   | yes   | no    | no    |
+| v0.2.0                                 | no    | yes   | yes   | no    | no    |
+| v0.1.0                                 | yes   | yes   | yes   | no    | no    |
 
 **Note**: for the entry with `+` sign, it means the driver's default released manifest doesn't work with corresponding Kubernetes version, but the driver container image is compatiable with the Kubernetes version if an older version's manifest is used.
 
@@ -68,9 +68,9 @@ Following sections are Kubernetes specific. If you are Kubernetes user, use foll
 * **Dynamic Provisioning** - uses persistence volume claim (PVC) to request the Kuberenetes to create the EBS volume on behalf of user and consumes the volume from inside container. Storage class's **allowedTopologies** could be used to restrict which AZ the volume should be provisioned in. The topology key should be **topology.ebs.csi.aws.com/zone**.
 * **Mount Option** - mount options could be specified in persistence volume (PV) to define how the volume should be mounted.
 * **NVMe** - consume NVMe EBS volume from EC2 [Nitro instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html#ec2-nitro-instances).
-* **Block Volume** (beta since 1.14) - consumes the EBS volume as a raw block device for latency sensitive application eg. MySql
-* **Volume Snapshot** (alpha) - creating volume snapshots and restore volume from snapshot.
-* **Volume Resizing** (alpha) - expand the volume size.
+* **[Block Volume](https://kubernetes-csi.github.io/docs/raw-block.html)** - consumes the EBS volume as a raw block device for latency sensitive application eg. MySql. The corresponding CSI feature (`CSIBlockVolume`) is GA since Kubernetes 1.18.
+* **[Volume Snapshot](https://kubernetes-csi.github.io/docs/snapshot-restore-feature.html)** - creating volume snapshots and restore volume from snapshot. The corresponding CSI feature (`VolumeSnapshotDataSource`) is beta since Kubernetes 1.17.
+* **[Volume Resizing](https://kubernetes-csi.github.io/docs/volume-expansion.html)** - expand the volume size. The corresponding CSI feature (`ExpandCSIVolumes`) is beta since Kubernetes 1.16.
 
 ## Prerequisites
 * If you are managing EBS volumes using static provisioning, get yourself familiar with [EBS volume](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AmazonEBS.html).
@@ -132,7 +132,12 @@ Make sure you follow the [Prerequisites](README.md#Prerequisites) before the exa
 * [Volume Resizing](../examples/kubernetes/resizing)
 
 ## Migrating from in-tree EBS plugin
-Starting from Kubernetes 1.14, CSI migration is supported as alpha feature. If you have persistence volumes that are created with in-tree `kubernetes.io/aws-ebs` plugin, you could migrate to use EBS CSI driver. To turn on the migration, set `CSIMigration` and `CSIMigrationAWS` feature gates to `true` for `kube-controller-manager` and `kubelet`.
+Starting from Kubernetes 1.17, CSI migration is supported as beta feature (alpha since 1.14). If you have persistence volumes that are created with in-tree `kubernetes.io/aws-ebs` plugin, you could migrate to use EBS CSI driver. To turn on the migration, set `CSIMigration` and `CSIMigrationAWS` feature gates to `true` for `kube-controller-manager` and `kubelet`.
+
+To make sure dynamically provisioned EBS volumes have all tags that the in-tree volume plugin used:
+* Run the external-provisioner sidecar with `--extra-create-metadata=true` cmdline option. External-provisioner v1.6 or newer is required.
+* Run the CSI driver with `--k8s-tag-cluster-id=<ID of the Kubernetes cluster>` command line option.
+
 
 ## Development
 Please go through [CSI Spec](https://github.com/container-storage-interface/spec/blob/master/spec.md) and [General CSI driver development guideline](https://kubernetes-csi.github.io/docs/Development.html) to get some basic understanding of CSI driver before you start.
